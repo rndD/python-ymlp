@@ -8,7 +8,7 @@
 import urllib
 import logging
 import inspect
-from datetime import datetime
+import datetime
 
 try:
     from django.utils import simplejson as json
@@ -45,9 +45,9 @@ class YMLPManager(object):
         self.key = key
         self.username = username
 
-        self.Contacts.manager, \
-        self.Groups.manager, \
-        self.Fields.manager, \
+        self.Contacts.manager,\
+        self.Groups.manager,\
+        self.Fields.manager,\
         self.Filters.manager = self, self, self, self
 
     def make_request(self, command , args = None):
@@ -64,13 +64,14 @@ class YMLPManager(object):
     class Contacts(YMLPSection):
 
         @classmethod
-        def Add(cls, email, group_id = None, overrule_unsubscribed_bounced = None, **kwargs_fields):
+        def Add(cls, email, group_id = None, overrule_unsubscribed_bounced = None, fields = None):
             """
             Contacts.Add() adds a new contact to one or more groups in your database.
             @param email:
             @param group_id: ID of the group or a comma-separated list of groups IDs; use Groups.GetList() to retrieve the ID for each group.
             @param overrule_unsubscribed_bounced: "0" or "1" (optional, default is "0"); if "1", the email address will be added even if this person previously unsubscribed or if the email address previously was removed by bounce back handling
-            @param kwargs_fields:data for any other field can be sent using the following syntax: FieldX=value (e.g.: Field2=John), where X is the ID of the field (use Fields.GetList() to retrieve the ID for each field)
+            @param fields:data for any other field can be sent using the following syntax: FieldX=value (e.g.: Field2=John), where X is the ID of the field (use Fields.GetList() to retrieve the ID for each field)
+            @type fields: dict
             """
 
             args = {
@@ -82,12 +83,13 @@ class YMLPManager(object):
             if not overrule_unsubscribed_bounced is None:
                 args["OverruleUnsubscribedBounced"] = overrule_unsubscribed_bounced
 
-            for field_id in kwargs_fields:
-                args["Field%s" % field_id] = str(kwargs_fields[field_id]).encode("utf-8")
+            if fields:
+                for field_id in fields:
+                    args["Field%s" % field_id] = unicode(fields[field_id]).encode('utf-8')
 
             result = cls.make_request(whoami(), args)
             if result.get("Code") == "0":
-                logging.info("%s : %s" % (datetime.now(), result.get("Output")))
+                logging.info("%s : %s" % (datetime.datetime.now(), result.get("Output")))
                 return True
             raise YMLPException(result.get("Code"), result.get("Output"))
 
@@ -105,22 +107,22 @@ class YMLPManager(object):
                 args["GroupId"] = group_id
             result = cls.make_request(whoami(), args)
             if result.get("Code") == "0":
-                logging.info("%s : %s" % (datetime.now(), result.get("Output")))
+                logging.info("%s : %s" % (datetime.datetime.now(), result.get("Output")))
                 return True
             raise YMLPException(result.get("Code"), result.get("Output"))
-        
+
         @classmethod
         def Unsubscribe(cls, email):
             """
             Contacts.Unsubscribe() unsubscribes a given email address.
-            @param email: 
+            @param email:
             @type email: str
             """
             args = {"Email": email}
             result = cls.make_request(whoami(), args)
             if type(result) is dict:
                 if result.get("Code") == "0":
-                    logging.info("%s : %s" % (datetime.now(), result.get("Output")))
+                    logging.info("%s : %s" % (datetime.datetime.now(), result.get("Output")))
                     return True
                 else:
                     raise YMLPException(result.get("Code"), result.get("Output"))
@@ -196,7 +198,7 @@ class YMLPManager(object):
             result = cls.make_request(whoami())
             if type(result) is dict and result.has_key("Code"):
                 raise YMLPException(result["Code"], result.get("Output"))
-            logging.info("%s : %s" % (datetime.datetime.now(), result.get("Output")))
+            logging.info("%s : %s" % (datetime.datetime.now(), result))
             return result
 
         @classmethod
@@ -211,6 +213,19 @@ class YMLPManager(object):
         def Update(cls):
             pass
 
+        @classmethod
+        def GetID(cls, fields_list, field_alias = None, field_name = None):
+            if field_alias:
+                field = filter(lambda x: x["Alias"] == field_alias, fields_list)
+            elif field_name:
+                field = filter(lambda x: x["FieldName"] == field_name, fields_list)
+            else:
+                raise YMLPException("Alias or name of field is not set")
+
+            if field:
+                return field[0]["ID"]
+            else:
+                raise YMLPException("Field not found")
 
     class Filters(YMLPSection):
 
