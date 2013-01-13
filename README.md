@@ -4,6 +4,7 @@ python-ymlp
 Python-ymlp is a [YMLP.COM](http://ymlp.com/) api wrapper for python, it's written in the way to copy original api strucure. For more information about YMLP api, visit [api page](http://www.ymlp.com/app/api.php).
 
 Implemented methods:
+
 1. Contacts 
     * Add
     * Delete
