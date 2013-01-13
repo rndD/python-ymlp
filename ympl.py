@@ -178,7 +178,7 @@ class YMLPManager(object):
         def Update(cls):
             pass
         @classmethod
-        def Empty(cls):
+            def Empty(cls):
             pass
 
 
@@ -238,6 +238,3 @@ class YMLPManager(object):
         @classmethod
         def Delete(cls):
             pass
-
-
-
